@@ -221,17 +221,21 @@ void usage()
 #endif
 
 #if defined(USING_ASAN)
-	#include <sanitizer/lsan_interface.h>
+	// FreeBSD doesn't support LeakSanitizer
+	#if defined(__FreeBSD__)
+		#define BINPAC_LSAN_DISABLE(x)
+	#else
+		#include <sanitizer/lsan_interface.h>
+		#define BINPAC_LSAN_DISABLE(x) __lsan_disable(x)
+	#endif
 #endif
 
 int main(int argc, char* argv[])
 	{
-	#if defined(USING_ASAN)
 	// We generally do not care at all if binpac is leaking and other
 	// projects that use it, like Zeek, only have their build tripped up
 	// by the default behavior of LSAN to treat leaks as errors.
-	__lsan_disable();
-	#endif
+	BINPAC_LSAN_DISABLE();
 
 #ifdef HAVE_MALLOC_OPTIONS
 	extern char *malloc_options;
